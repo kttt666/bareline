@@ -44,10 +44,11 @@ case "$(uname -s)" in
   *)                    IS_WIN=0 ;;
 esac
 
-# 把 /c/foo 转成 C:/foo（Windows 版 javac/d8 只认后者）
+# 转成 Windows 风格路径（C:/foo）。
+# Windows 版 javac/d8 不认 MSYS 的 /c/... 和 /tmp/... 虚拟路径。
 win() {
-  if [ "$IS_WIN" = 1 ]; then
-    sed 's|^/\([a-zA-Z]\)/|\1:/|' <<<"$1"
+  if [ "$IS_WIN" = 1 ] && command -v cygpath >/dev/null 2>&1; then
+    cygpath -m "$1"
   else
     printf '%s' "$1"
   fi
@@ -146,6 +147,19 @@ elif [ "$IS_WIN" = 1 ]; then
 else
   BUILD="/tmp/pocket-build"
 fi
+
+mkdir -p "$BUILD" 2>/dev/null || die "无法创建构建目录：$BUILD"
+
+# 解析成真实绝对路径。Windows 上 /tmp 这类 MSYS 虚拟路径必须转成 C:/...，
+# 否则传给 javac/d8 时它们找不到文件。
+if [ "$IS_WIN" = 1 ]; then
+  BUILD_W="$(cd "$BUILD" && pwd -W 2>/dev/null)"
+  if [ -n "$BUILD_W" ]; then BUILD="$BUILD_W"; else BUILD="$(cd "$BUILD" && pwd)"; fi
+else
+  BUILD="$(cd "$BUILD" && pwd)"
+fi
+BUILD="$(printf '%s' "$BUILD" | tr -d '\r\n')"
+
 case "$BUILD" in
   *" "*) die "构建目录不能含空格：$BUILD（用 POCKET_BUILD_DIR 换一个）" ;;
 esac
