@@ -73,7 +73,9 @@ Bareline 反过来：**整屏都是网页**。所有控件收在一个半透明�
 
 ## 下载
 
-从 [Releases](../../releases) 下载最新的 `bareline-x.y.z.apk`，直接安装。
+**[⬇ 下载 bareline-1.0.0.apk](https://github.com/kttt666/bareline/releases/download/v1.0.0/bareline-1.0.0.apk)** · 311 KB
+
+或从 [Releases](../../releases) 页挑版本。
 
 - 最低支持 **Android 8.0**（API 26）
 - 需要**相机权限**才能扫码，其余功能不需要任何权限
