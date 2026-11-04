@@ -32,15 +32,15 @@ jobs:
 
       - name: 构建
         env:
-          POCKET_BUILD_TOOLS: '34.0.0'
-          POCKET_PLATFORM: 'android-34'
-          POCKET_BUILD_DIR: /tmp/pocket-build
-          POCKET_KS_PASS: ci-temp-pass
+          BARELINE_BUILD_TOOLS: '34.0.0'
+          BARELINE_PLATFORM: 'android-34'
+          BARELINE_BUILD_DIR: /tmp/bareline-build
+          BARELINE_KS_PASS: ci-temp-pass
         run: bash build.sh
 
       - name: 上传产物
         uses: actions/upload-artifact@v4
         with:
-          name: pocket-apk
+          name: bareline-apk
           path: dist/*.apk
           if-no-files-found: error

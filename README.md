@@ -1,4 +1,4 @@
-# Pocket
+# Bareline
 
 > 一个几乎没有界面的安卓浏览器。打开链接、扫二维码，剩下的地方全留给网页。
 
@@ -16,7 +16,7 @@
 大多数手机浏览器打开就是一堆东西：地址栏、标签栏、书签栏、资讯流、推荐位……
 真正想看的内容被挤到下面一小块。
 
-Pocket 反过来：**整屏都是网页**。所有控件收在一个半透明小圆钮里，点了才出来。
+Bareline 反过来：**整屏都是网页**。所有控件收在一个半透明小圆钮里，点了才出来。
 
 它最开始是为了搭配 [dsh-pocket](https://github.com/shaobeichen/dsh-pocket) 用的 ——
 手机扫码连上电脑上的 DSH，然后当成一个纯粹的 WebView 用。
@@ -47,7 +47,7 @@ Pocket 反过来：**整屏都是网页**。所有控件收在一个半透明小
 ### 首页
 
 ```
-        P O C K E T
+        B A R E L I N E
 
    ┌─────────────────────┬────┐
    │  输入网址            │ ⛶  │   ← 扫码
@@ -73,7 +73,7 @@ Pocket 反过来：**整屏都是网页**。所有控件收在一个半透明小
 
 ## 下载
 
-从 [Releases](../../releases) 下载最新的 `pocket-x.y.z.apk`，直接安装。
+从 [Releases](../../releases) 下载最新的 `bareline-x.y.z.apk`，直接安装。
 
 - 最低支持 **Android 8.0**（API 26）
 - 需要**相机权限**才能扫码，其余功能不需要任何权限
@@ -85,15 +85,15 @@ Pocket 反过来：**整屏都是网页**。所有控件收在一个半透明小
 
 ## 配合 dsh-pocket 使用
 
-> Pocket 是独立项目，和 [dsh-pocket](https://github.com/shaobeichen/dsh-pocket) 没有代码依赖关系，
+> Bareline 是独立项目，和 [dsh-pocket](https://github.com/shaobeichen/dsh-pocket) 没有代码依赖关系，
 > 只是恰好能配合它用。**不装 dsh-pocket 也能当普通浏览器用。**
 
 1. 电脑上装好 [dsh-pocket](https://github.com/shaobeichen/dsh-pocket)，在设置页的「手机访问」里会看到一个**局域网二维码**
 2. 手机连**同一个 WiFi**
-3. 打开 Pocket → 点输入框右边的 ⛶ → 扫那个二维码
+3. 打开 Bareline → 点输入框右边的 ⛶ → 扫那个二维码
 4. 直接进入电脑上的 DSH 界面，不用手输密码
 
-二维码里带的是 `http://<局域网IP>:<端口>/?token=<PIN>`。Pocket 打开后，
+二维码里带的是 `http://<局域网IP>:<端口>/?token=<PIN>`。Bareline 打开后，
 dsh-pocket 会认这个 token 并种一个 HttpOnly cookie，后续请求就带着它走。
 
 **登录态跟着电脑上的 `dsh web` 进程走**：它一直开着，手机就不用再扫；
@@ -122,9 +122,9 @@ dsh-pocket 会认这个 token 并种一个 HttpOnly cookie，后续请求就带�
 
 ```bash
 git clone <repo>
-cd pocket
+cd bareline
 bash build.sh
-# → dist/pocket-1.0.0.apk
+# → dist/bareline-1.0.0.apk
 ```
 
 ### 依赖
@@ -146,12 +146,12 @@ ANDROID_SDK_ROOT=/path/to/sdk JAVA_HOME=/path/to/jdk bash build.sh
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `POCKET_VERSION` | `1.0.0` | 版本名 |
-| `POCKET_VERSION_CODE` | `1` | 版本号（整数，升级必须递增） |
-| `POCKET_BUILD_DIR` | `C:\pocket-build` / `/tmp/pocket-build` | 中间产物目录，**不能含空格** |
-| `POCKET_KS_PASS` | `pocket-local` | 签名密钥口令 |
-| `POCKET_BUILD_TOOLS` | 最新 | 指定 build-tools 版本 |
-| `POCKET_PLATFORM` | 最新 | 指定 platform 版本 |
+| `BARELINE_VERSION` | `1.0.0` | 版本名 |
+| `BARELINE_VERSION_CODE` | `1` | 版本号（整数，升级必须递增） |
+| `BARELINE_BUILD_DIR` | `C:\bareline-build` / `/tmp/bareline-build` | 中间产物目录，**不能含空格** |
+| `BARELINE_KS_PASS` | `bareline-local` | 签名密钥口令 |
+| `BARELINE_BUILD_TOOLS` | 最新 | 指定 build-tools 版本 |
+| `BARELINE_PLATFORM` | 最新 | 指定 platform 版本 |
 
 ### 构建流程
 
@@ -159,7 +159,7 @@ ANDROID_SDK_ROOT=/path/to/sdk JAVA_HOME=/path/to/jdk bash build.sh
 aapt2 compile → aapt2 link → javac → d8 → jar uf → zipalign → apksigner
 ```
 
-`build.sh` 首次运行会自动生成 `dist/pocket.keystore`（RSA 2048，有效期 10000 天）。
+`build.sh` 首次运行会自动生成 `dist/bareline.keystore`（RSA 2048，有效期 10000 天）。
 
 > **这个文件要自己保管好。** 换签名密钥后旧版本无法覆盖升级，必须先卸载再装。
 > 它也已经在 `.gitignore` 里，不会被提交。
@@ -236,7 +236,7 @@ el.dispatchEvent(new Event('change', { bubbles: true }));
 注册页那种「密码 + 确认密码」有两个框，就只填值不提交。
 
 **存储**：密码字段用 Android Keystore 的 AES-256-GCM 加密后再 Base64 落盘，
-密钥在 Keystore 里（`pocket_vault_key`），root 也导不出来。
+密钥在 Keystore 里（`bareline_vault_key`），root 也导不出来。
 名称和账号明文存 —— 列表要展示。
 
 **层级**：密码库浮层必须 `elevation="20dp"`，否则左下角那个圆钮会浮在它上面，
@@ -245,7 +245,7 @@ el.dispatchEvent(new Event('change', { bubbles: true }));
 ### 代码结构
 
 ```
-src/com/littlesauce/pocket/
+src/com/littlesauce/bareline/
 ├── MainActivity.java   主界面：WebView、面板、沉浸式、密码库接线
 ├── ScanActivity.java   扫码页：相机预览、ZXing 解码、相册导入
 ├── VaultSheet.java     密码库浮层 + 注入用 JS

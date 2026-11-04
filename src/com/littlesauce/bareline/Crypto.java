@@ -1,4 +1,4 @@
-package com.littlesauce.pocket;
+package com.littlesauce.bareline;
 
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
@@ -22,7 +22,7 @@ import javax.crypto.spec.GCMParameterSpec;
 public final class Crypto {
 
     private static final String STORE = "AndroidKeyStore";
-    private static final String ALIAS = "pocket_vault_key";
+    private static final String ALIAS = "bareline_vault_key";
     private static final String TRANSFORM = "AES/GCM/NoPadding";
     private static final int TAG_BITS = 128;
 

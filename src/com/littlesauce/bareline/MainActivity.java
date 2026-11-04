@@ -1,4 +1,4 @@
-package com.littlesauce.pocket;
+package com.littlesauce.bareline;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;

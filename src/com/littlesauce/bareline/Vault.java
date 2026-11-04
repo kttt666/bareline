@@ -1,4 +1,4 @@
-package com.littlesauce.pocket;
+package com.littlesauce.bareline;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class Vault {
 
-    private static final String PREF = "pocket_vault";
+    private static final String PREF = "bareline_vault";
     private static final String KEY_ITEMS = "items";
 
     public static class Item {

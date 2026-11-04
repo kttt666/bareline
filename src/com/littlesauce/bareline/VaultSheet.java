@@ -1,4 +1,4 @@
-package com.littlesauce.pocket;
+package com.littlesauce.bareline;
 
 import android.app.Activity;
 import android.view.LayoutInflater;

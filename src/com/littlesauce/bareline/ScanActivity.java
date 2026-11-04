@@ -1,4 +1,4 @@
-package com.littlesauce.pocket;
+package com.littlesauce.bareline;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -58,7 +58,7 @@ public class ScanActivity extends Activity implements SurfaceHolder.Callback {
 
     public static final String EXTRA_RESULT = "result";
 
-    private static final String TAG = "PocketScan";
+    private static final String TAG = "BarelineScan";
     private static final int REQ_CAMERA = 2001;
     private static final int REQ_ALBUM = 2002;
 

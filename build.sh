@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
 # ============================================================
-# Pocket —— 极简链接浏览器
+# Bareline —— 极简链接浏览器
 #
 # 纯 Android SDK 命令行构建，不依赖 Gradle / Android Studio：
 #   aapt2 → javac → d8 → jar → zipalign → apksigner
 #
 # 用法：
 #   bash build.sh                 # 用默认版本号构建
-#   POCKET_VERSION=1.2.0 bash build.sh
+#   BARELINE_VERSION=1.2.0 bash build.sh
 #
 # 可用环境变量：
 #   ANDROID_SDK_ROOT    Android SDK 路径（找不到时会自动探测常见位置）
 #   JAVA_HOME           JDK 路径（默认用 Android Studio 自带 jbr）
-#   POCKET_BUILD_DIR    中间产物目录，**不能含空格**
-#   POCKET_VERSION      版本名，默认 1.0.0
-#   POCKET_VERSION_CODE 版本号，默认 1
-#   POCKET_KS_PASS      签名密钥口令，默认 pocket-local
-#   POCKET_BUILD_TOOLS  指定 build-tools 版本，默认取最新
-#   POCKET_PLATFORM     指定 platform，默认取最新
+#   BARELINE_BUILD_DIR    中间产物目录，**不能含空格**
+#   BARELINE_VERSION      版本名，默认 1.0.0
+#   BARELINE_VERSION_CODE 版本号，默认 1
+#   BARELINE_KS_PASS      签名密钥口令，默认 bareline-local
+#   BARELINE_BUILD_TOOLS  指定 build-tools 版本，默认取最新
+#   BARELINE_PLATFORM     指定 platform，默认取最新
 # ============================================================
 set -euo pipefail
 
@@ -28,11 +28,11 @@ LIBS="$ROOT/libs"
 MANIFEST="$ROOT/AndroidManifest.xml"
 DIST="$ROOT/dist"
 
-VERSION="${POCKET_VERSION:-1.0.0}"
-VERSION_CODE="${POCKET_VERSION_CODE:-1}"
-KS_PASS="${POCKET_KS_PASS:-pocket-local}"
-PKG="com.littlesauce.pocket"
-APK_NAME="pocket-${VERSION}.apk"
+VERSION="${BARELINE_VERSION:-1.0.0}"
+VERSION_CODE="${BARELINE_VERSION_CODE:-1}"
+KS_PASS="${BARELINE_KS_PASS:-bareline-local}"
+PKG="com.littlesauce.bareline"
+APK_NAME="bareline-${VERSION}.apk"
 
 info() { printf '\033[36m[*]\033[0m %s\n' "$*"; }
 ok()   { printf '\033[32m[+]\033[0m %s\n' "$*"; }
@@ -104,11 +104,11 @@ SDK="$(find_sdk || true)"
 [ -n "$SDK" ] || die "找不到 Android SDK，请设置 ANDROID_SDK_ROOT"
 SDK="$(cd "$SDK" && pwd)"
 
-BT_VER="${POCKET_BUILD_TOOLS:-$(ls "$SDK/build-tools" 2>/dev/null | sort -V | tail -1)}"
+BT_VER="${BARELINE_BUILD_TOOLS:-$(ls "$SDK/build-tools" 2>/dev/null | sort -V | tail -1)}"
 [ -n "$BT_VER" ] || die "SDK 里没有 build-tools"
 BT="$SDK/build-tools/$BT_VER"
 
-PLATFORM="${POCKET_PLATFORM:-$(ls "$SDK/platforms" 2>/dev/null | sort -V | tail -1)}"
+PLATFORM="${BARELINE_PLATFORM:-$(ls "$SDK/platforms" 2>/dev/null | sort -V | tail -1)}"
 [ -n "$PLATFORM" ] || die "SDK 里没有 platforms"
 ANDROID_JAR="$SDK/platforms/$PLATFORM/android.jar"
 
@@ -140,12 +140,12 @@ APKSIGNER="$(tool "$BT" apksigner)" || die "缺少 apksigner"
 # ---------- 中间目录 ----------
 # javac / d8 的 @argfile 按空格切分参数、引号无效，
 # 所以中间产物必须放在**不含空格**的路径下。
-if [ -n "${POCKET_BUILD_DIR:-}" ]; then
-  BUILD="$POCKET_BUILD_DIR"
+if [ -n "${BARELINE_BUILD_DIR:-}" ]; then
+  BUILD="$BARELINE_BUILD_DIR"
 elif [ "$IS_WIN" = 1 ]; then
-  BUILD="/c/pocket-build"
+  BUILD="/c/bareline-build"
 else
-  BUILD="/tmp/pocket-build"
+  BUILD="/tmp/bareline-build"
 fi
 
 mkdir -p "$BUILD" 2>/dev/null || die "无法创建构建目录：$BUILD"
@@ -161,7 +161,7 @@ fi
 BUILD="$(printf '%s' "$BUILD" | tr -d '\r\n')"
 
 case "$BUILD" in
-  *" "*) die "构建目录不能含空格：$BUILD（用 POCKET_BUILD_DIR 换一个）" ;;
+  *" "*) die "构建目录不能含空格：$BUILD（用 BARELINE_BUILD_DIR 换一个）" ;;
 esac
 
 GEN="$BUILD/gen"
@@ -170,10 +170,10 @@ DEXDIR="$BUILD/dex"
 UNSIGNED="$BUILD/app-unsigned.apk"
 ALIGNED="$BUILD/app-aligned.apk"
 SIGNED="$BUILD/app-release.apk"
-KS="$DIST/pocket.keystore"
+KS="$DIST/bareline.keystore"
 
 echo "=========================================="
-echo " Pocket ${VERSION}  (versionCode ${VERSION_CODE})"
+echo " Bareline ${VERSION}  (versionCode ${VERSION_CODE})"
 echo "=========================================="
 info "SDK        $SDK"
 info "build-tools $BT_VER"
@@ -269,16 +269,16 @@ if [ ! -f "$KS" ]; then
   info "    生成签名密钥 $KS"
   "$KEYTOOL" -genkeypair \
     -keystore "$(win "$KS")" \
-    -alias pocket \
+    -alias bareline \
     -keyalg RSA -keysize 2048 -validity 10000 \
     -storepass "$KS_PASS" -keypass "$KS_PASS" \
-    -dname "CN=Pocket, O=Pocket" >/dev/null 2>&1
+    -dname "CN=Bareline, O=Bareline" >/dev/null 2>&1
   ok "    密钥已生成（口令：$KS_PASS）"
 fi
 
 "$APKSIGNER" sign \
   --ks "$(win "$KS")" \
-  --ks-key-alias pocket \
+  --ks-key-alias bareline \
   --ks-pass "pass:$KS_PASS" \
   --key-pass "pass:$KS_PASS" \
   --out "$SIGNED" \

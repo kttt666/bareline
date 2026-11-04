@@ -1,4 +1,4 @@
-package com.littlesauce.pocket;
+package com.littlesauce.bareline;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class Store {
 
-    private static final String PREF = "pocket_store";
+    private static final String PREF = "bareline_store";
     private static final String KEY_LINKS = "links";
     private static final int MAX = 40;
 
