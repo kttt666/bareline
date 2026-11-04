@@ -18,8 +18,9 @@
 
 Pocket 反过来：**整屏都是网页**。所有控件收在一个半透明小圆钮里，点了才出来。
 
-它最开始是为了搭配 **dsh-pocket** 用的 —— 手机扫码连上电脑上的 DSH，
-然后当成一个纯粹的 WebView 用。但本身也能当日常的「只读链接」浏览器。
+它最开始是为了搭配 [dsh-pocket](https://github.com/shaobeichen/dsh-pocket) 用的 ——
+手机扫码连上电脑上的 DSH，然后当成一个纯粹的 WebView 用。
+但本身也能当日常的「只读链接」浏览器，和那个插件没有任何代码依赖。
 
 ---
 
@@ -84,19 +85,25 @@ Pocket 反过来：**整屏都是网页**。所有控件收在一个半透明小
 
 ## 配合 dsh-pocket 使用
 
-1. 电脑上装好 dsh-pocket，在设置页的「手机访问」里会看到一个**局域网二维码**
+> Pocket 是独立项目，和 [dsh-pocket](https://github.com/shaobeichen/dsh-pocket) 没有代码依赖关系，
+> 只是恰好能配合它用。**不装 dsh-pocket 也能当普通浏览器用。**
+
+1. 电脑上装好 [dsh-pocket](https://github.com/shaobeichen/dsh-pocket)，在设置页的「手机访问」里会看到一个**局域网二维码**
 2. 手机连**同一个 WiFi**
 3. 打开 Pocket → 点输入框右边的 ⛶ → 扫那个二维码
 4. 直接进入电脑上的 DSH 界面，不用手输密码
 
-二维码里带的是 `http://<局域网IP>:<端口>/?token=<PIN>`，Pocket 打开后
-pocket 服务会种一个 30 天有效的 HttpOnly cookie，之后重开也不用再扫。
+二维码里带的是 `http://<局域网IP>:<端口>/?token=<PIN>`。Pocket 打开后，
+dsh-pocket 会认这个 token 并种一个 HttpOnly cookie，后续请求就带着它走。
+
+**登录态跟着电脑上的 `dsh web` 进程走**：它一直开着，手机就不用再扫；
+`dsh web` 重启或更新后 cookie 失效，需要重新扫一次码。
 
 人在外面要用的话，在 dsh-pocket 里开「公网访问」，扫公网那个二维码即可。
 
 ### 每次都要输 PIN 太烦？
 
-用**密码库**：
+如果不想每次都扫码（比如 dsh web 重启过、或者你把局域网密码关掉了），用**密码库**：
 
 1. 点 ☰ → 「🔑 密码库」→ 右上角「+ 新建」
 2. 填名称（例如 `DSH-LAN`）和密码，保存
