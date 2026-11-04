@@ -1,0 +1,25 @@
+# 构建产物
+dist/*.apk
+dist/*.apk.idsig
+
+# 签名密钥 —— 绝对不要提交
+dist/*.keystore
+*.jks
+*.keystore
+
+# 第三方二进制依赖
+# libs/zxing-core.jar 是 Apache-2.0 的 ZXing core，允许随仓库分发，
+# 直接提交以便 clone 后即可构建。丢了可以跑 fetch-deps.sh 重新拉。
+# libs/*.jar
+
+# 本地测试残留
+t_*.png
+*.log
+/tmp/
+
+# 编辑器 / 系统
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+.vscode/

@@ -1,0 +1,46 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: 安装 Android SDK 工具
+        uses: android-actions/setup-android@v3
+
+      - name: 安装 build-tools 与 platform
+        run: |
+          sdkmanager --install "build-tools;34.0.0" "platforms;android-34"
+          yes | sdkmanager --licenses > /dev/null || true
+
+      - name: 拉取依赖
+        run: bash fetch-deps.sh
+
+      - name: 构建
+        env:
+          POCKET_BUILD_TOOLS: '34.0.0'
+          POCKET_PLATFORM: 'android-34'
+          POCKET_BUILD_DIR: /tmp/pocket-build
+          POCKET_KS_PASS: ci-temp-pass
+        run: bash build.sh
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: pocket-apk
+          path: dist/*.apk
+          if-no-files-found: error

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 口袋轮廓 -->
+    <path
+        android:pathData="M30,42 L30,70 A8,8 0 0 0 38,78 L70,78 A8,8 0 0 0 78,70 L78,42 Z"
+        android:fillColor="#FFFFFFFF" />
+
+    <!-- 袋口横线 -->
+    <path
+        android:pathData="M26,42 L82,42"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+
+    <!-- 袋内箭头（指向内部 = 装进去） -->
+    <path
+        android:pathData="M54,54 L54,66 M48,60 L54,66 L60,60"
+        android:strokeColor="#FF2F62FF"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#FFF6F7F9</color>
+    <color name="sheet">#FFFFFFFF</color>
+    <color name="ink">#FF14161A</color>
+    <color name="muted">#FF8C9099</color>
+    <color name="accent">#FF2F62FF</color>
+    <color name="line">#FFE9EAEE</color>
+    <color name="field">#FFF1F2F5</color>
+</resources>
