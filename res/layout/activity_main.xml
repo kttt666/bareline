@@ -92,9 +92,8 @@
         android:id="@+id/panel"
         android:layout_width="286dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|left"
-        android:layout_marginLeft="16dp"
-        android:layout_marginBottom="70dp"
+        android:layout_gravity="center_vertical|left"
+        android:layout_marginLeft="74dp"
         android:background="@drawable/bg_panel"
         android:elevation="10dp"
         android:orientation="vertical"
@@ -254,35 +253,50 @@
         </ScrollView>
     </LinearLayout>
 
-    <!-- 左下角小半透明按钮 -->
+    <!-- 屏幕最左边缘的小三角：平时只有它，点一下才把 ☰ 放出来 -->
+    <ImageButton
+        android:id="@+id/edgeTab"
+        android:layout_width="15dp"
+        android:layout_height="46dp"
+        android:layout_gravity="center_vertical|left"
+        android:background="@drawable/bg_edge"
+        android:contentDescription="展开菜单按钮"
+        android:elevation="6dp"
+        android:paddingLeft="1dp"
+        android:paddingRight="2dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_edge"
+        android:tint="@color/muted" />
+
+    <!-- 左下角小半透明按钮：默认藏起来，点三角才出现 -->
     <ImageButton
         android:id="@+id/fab"
         android:layout_width="44dp"
         android:layout_height="44dp"
-        android:layout_gravity="bottom|left"
-        android:layout_marginLeft="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_gravity="center_vertical|left"
+        android:layout_marginLeft="22dp"
         android:background="@drawable/bg_fab"
         android:contentDescription="最近打开"
         android:elevation="6dp"
         android:padding="12dp"
         android:scaleType="fitCenter"
-        android:src="@drawable/ic_list" />
+        android:src="@drawable/ic_list"
+        android:visibility="gone" />
 
     <!-- 密码填充按钮：只在页面上有密码框时出现，叠在 ☰ 上面 -->
     <ImageButton
         android:id="@+id/fabKey"
         android:layout_width="44dp"
         android:layout_height="44dp"
-        android:layout_gravity="bottom|left"
-        android:layout_marginLeft="16dp"
-        android:layout_marginBottom="68dp"
+        android:layout_gravity="center_vertical|left"
+        android:layout_marginLeft="22dp"
         android:background="@drawable/bg_key_fab"
         android:contentDescription="填入密码"
-        android:elevation="6dp"
+        android:elevation="7dp"
         android:padding="11dp"
         android:scaleType="fitCenter"
         android:src="@drawable/ic_key"
+        android:translationY="-52dp"
         android:visibility="gone" />
 
     <!-- 密码库浮层 -->

@@ -29,10 +29,12 @@ Bareline 反过来：**整屏都是网页**。所有控件收在一个半透明�
 | | |
 | --- | --- |
 | 🖥 **零占位界面** | 网页铺满全屏，没有常驻地址栏、标签栏、工具栏 |
-| ⚪ **一个按钮搞定一切** | 左下角 44dp 半透明圆钮，点开才有地址栏 + 最近打开 |
+| ▸ **左边缘三角** | 常驻的只有一个 15dp 小三角，点它才放出 ☰，再点才进菜单 |
+| ⚪ **不压网页按钮** | 三角贴在屏幕左边缘正中，不碰左下角，网页自己的按钮照常用 |
 | 📷 **扫码直连** | 内置二维码扫描，扫到链接直接打开 |
 | 🖼 **相册导入** | 扫不了屏幕上的码？截图后从相册选图识别 |
 | 🔑 **密码库** | 存好 PIN，到密码页点一下蓝色钥匙，自动填入并提交 |
+| 📎 **网页选文件** | 网页里的「上传附件」能正常唤起系统文件管理器 |
 | 📱 **沉浸式全屏** | 状态栏、导航栏自动收起，边缘滑出后自动消失 |
 | 🔗 **接收分享** | 从别的 App 分享链接过来可直接打开 |
 | 🪶 **轻** | 约 300 KB，无第三方 SDK、无统计、无联网上报 |
@@ -55,25 +57,35 @@ Bareline 反过来：**整屏都是网页**。所有控件收在一个半透明�
 
      扫电脑上的二维码，直连 DSH
 
-  ☰                            ← 左下角半透明小圆钮
+▸                                ← 左边缘的小三角，只有它常驻
 ```
 
-### 点开那个小圆钮
+### 点一下那个三角
 
-面板从左下角浮出，包含：
+三角在屏幕左侧正中，点它 → 旁边滑出 **☰ 小圆钮**；再点 ☰ → 面板展开：
 
 - **地址栏** —— 当前网址，可直接改写跳转
 - **后退 / 刷新 / 扫码**
 - **最近打开** —— 最多 40 条，可单条删除或一键清空
 - **🔑 密码库** —— 进入管理界面
 
-点面板外的任意位置、或按返回键即收起。浏览网页时面板默认关闭，不挡内容。
+```
+▸ ☰              ← 第一下：放出按钮
+▸ ☰ ┌──────────┐ ← 第二下：面板展开
+    │ 最近打开   │
+    │ 🔑 密码库  │
+    └──────────┘
+```
+
+收起方式：点面板外任意处、再点一次 ☰、按返回键，或者连按两次三角。**面板关掉时 ☰ 会自动缩回去**，屏幕上又只剩那个三角，不占任何常驻位置。
+
+> 这样设计是因为：DSH 自己的加号按钮就在左下角，常驻的 ☰ 会压住它。现在三角贴在屏幕左边缘中间，和网页内容互不干扰。
 
 ---
 
 ## 下载
 
-**[⬇ 下载 bareline-1.0.0.apk](https://github.com/kttt666/bareline/releases/download/v1.0.0/bareline-1.0.0.apk)** · 311 KB
+**[⬇ 下载 bareline-1.1.0.apk](https://github.com/kttt666/bareline/releases/download/v1.1.0/bareline-1.1.0.apk)** · 315 KB
 
 或从 [Releases](../../releases) 页挑版本。
 
@@ -126,7 +138,7 @@ dsh-pocket 会认这个 token 并种一个 HttpOnly cookie，后续请求就带�
 git clone <repo>
 cd bareline
 bash build.sh
-# → dist/bareline-1.0.0.apk
+# → dist/bareline-1.1.0.apk
 ```
 
 ### 依赖
@@ -172,13 +184,36 @@ aapt2 compile → aapt2 link → javac → d8 → jar uf → zipalign → apksig
 
 这部分是踩过的坑，写给想改代码的人。
 
-### 极简界面：面板代替滑动
+### 极简界面：从滑动 sheet 到边缘三角
 
-最早做的是底部可拖拽的 sheet，问题很明显：**它一直占着屏幕下方一块**，
-网页内容被压住，而且滑出来的动作会误触。
+演进过三代：
 
-改成左下角一个圆钮 + 点开浮出面板后，网页任何时候都是满屏的。
-面板用 `alpha` + `translationY` 做 150ms 入场动画，不需要 `ValueAnimator` 改高度。
+1. **底部可拖拽 sheet** —— 一直占着屏幕下方一块，网页被压住，滑出来还容易误触
+2. **左下角圆钮** —— 网页满屏了，但 DSH 自己的加号就在左下角，被压住 2/3
+3. **左边缘三角 + 按需放出 ☰**（当前）—— 常驻的只有一个 15dp 半透明三角，
+   贴在屏幕左侧正中；点它才滑出 ☰，再点 ☰ 才展开面板
+
+```java
+private void setRail(boolean open) {   // 三角 ⇄ ☰
+    railOpen = open;
+    if (open) { fab.setVisibility(VISIBLE); fab.animate().alpha(1f).translationX(0f)... }
+    else      { fab.animate().alpha(0f).translationX(-dp(8))... .withEndAction(GONE) }
+}
+
+private void closePanel() {
+    ...
+    .withEndAction(() -> {
+        panel.setVisibility(GONE);
+        scrim.setVisibility(GONE);
+        setRail(false);      // 面板关了就把 ☰ 一起收回去
+    })
+}
+```
+
+- 面板用 `alpha` + `translationX` 做 150ms 入场动画，不用 `ValueAnimator` 改高度
+- `onBackPressed` 的判断顺序：密码库浮层 → 面板 → 三角 → 网页后退
+- **`R.drawable.xxx` 只认 `ImageButton` 类型的字段**，声明成 `View` 调
+  `setImageResource()` 编译不过
 
 ### 沉浸式全屏：两个方法，顺序不能错
 
@@ -241,8 +276,37 @@ el.dispatchEvent(new Event('change', { bubbles: true }));
 密钥在 Keystore 里（`bareline_vault_key`），root 也导不出来。
 名称和账号明文存 —— 列表要展示。
 
-**层级**：密码库浮层必须 `elevation="20dp"`，否则左下角那个圆钮会浮在它上面，
+**层级**：密码库浮层必须 `elevation="20dp"`，否则旁边那个 ☰ 会浮在它上面，
 把列表第一条盖住。
+
+### 网页选文件：空壳 WebChromeClient 是无声的
+
+网页里点「上传附件」没任何反应，也不报错 —— 因为默认的 `WebChromeClient`
+对 `onShowFileChooser()` 返回 `false`，什么都不做。**跟存储权限无关**：
+网页文件选择器不需要 App 自己申请存储权限。
+
+```java
+web.setWebChromeClient(new WebChromeClient() {
+    @Override
+    public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> cb,
+                                     FileChooserParams params) {
+        if (filePathCallback != null) filePathCallback.onReceiveValue(null);  // 收尾上一次
+        filePathCallback = cb;
+        ...
+    }
+});
+```
+
+几个细节：
+
+- **先收尾上一次的回调**，否则第二次点击永远不响应
+- `params.getAcceptTypes()` 可能返回 `.txt` 这种**扩展名**，直接塞
+  `setType()` 会变无效 MIME，要用 `MimeTypeMap` 转；多个类型放 `EXTRA_MIME_TYPES`
+- **别套 `Intent.createChooser`**，部分机型会吞掉结果，直接
+  `startActivityForResult`
+- 无论用户选没选，都必须 `onReceiveValue` 调**恰好一次**，否则页面一直卡着
+- 还要开 `setAllowFileAccess(true)` + `setAllowContentAccess(true)`，
+  否则 `content://` 交给页面时会被拦
 
 ### 代码结构
 

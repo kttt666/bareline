@@ -19,16 +19,21 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.CookieManager;
+import android.webkit.MimeTypeMap;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
+import android.webkit.WebChromeClient.FileChooserParams;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,8 +46,12 @@ import java.util.List;
 public class MainActivity extends Activity {
 
     private static final int REQ_SCAN = 1001;
+    /** 网页里 <input type="file"> 被点击后，等系统选择器回传文件。 */
+    private static final int REQ_FILE = 1002;
 
     private WebView web;
+    /** 网页文件选择器的回调，必须先存着，选完文件再喂回去。 */
+    private ValueCallback<Uri[]> filePathCallback;
     private View homeLayer;
     private EditText urlInput;
     private EditText barInput;
@@ -50,7 +59,9 @@ public class MainActivity extends Activity {
     private View scrim;
     private View barRow;
     private LinearLayout linkList;
+    private View fab;
     private View fabKey;
+    private ImageButton edgeTab;
     private TextView vaultCount;
 
     private Store store;
@@ -58,6 +69,8 @@ public class MainActivity extends Activity {
     private VaultSheet vaultSheet;
     private boolean panelOpen = false;
     private boolean browsing = false;
+    /** 边缘三角是否已把 ☰ 放出来。 */
+    private boolean railOpen = false;
     /** 当前页面是否出现过密码框，决定钥匙按钮是否显示。 */
     private boolean pageHasPassword = false;
 
@@ -84,7 +97,9 @@ public class MainActivity extends Activity {
         scrim = findViewById(R.id.scrim);
         barRow = findViewById(R.id.barRow);
         linkList = findViewById(R.id.linkList);
+        fab = findViewById(R.id.fab);
         fabKey = findViewById(R.id.fabKey);
+        edgeTab = findViewById(R.id.edgeTab);
         vaultCount = findViewById(R.id.vaultCount);
 
         vaultSheet = new VaultSheet(
@@ -186,6 +201,9 @@ public class MainActivity extends Activity {
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setJavaScriptCanOpenWindowsAutomatically(true);
+        // 网页里选文件（<input type="file">）需要这两项才能把 content:// 交给页面
+        s.setAllowFileAccess(true);
+        s.setAllowContentAccess(true);
 
         web.setBackgroundColor(0xFFF6F7F9);
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);
@@ -231,7 +249,95 @@ public class MainActivity extends Activity {
             }
         });
 
-        web.setWebChromeClient(new WebChromeClient());
+        // 网页里的 <input type="file"> 要靠 onShowFileChooser 才能真正唤起选择器，
+        // 空壳 WebChromeClient 默认返回 false，点了就毫无反应。
+        web.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(WebView view,
+                                             ValueCallback<Uri[]> callback,
+                                             FileChooserParams params) {
+                // 上一次没走完的回调必须先收尾，否则后续点击全部无效
+                if (filePathCallback != null) {
+                    filePathCallback.onReceiveValue(null);
+                }
+                filePathCallback = callback;
+
+                Intent pick = new Intent(Intent.ACTION_GET_CONTENT);
+                pick.addCategory(Intent.CATEGORY_OPENABLE);
+
+                // accept 可能是 "image/*" 这种 MIME，也可能是 ".txt" 这种扩展名，
+                // 后者直接塞进 setType 会变成无效类型，必须转成 MIME
+                ArrayList<String> mimes = new ArrayList<>();
+                String[] accept = null;
+                try {
+                    accept = params.getAcceptTypes();
+                } catch (Exception ignored) {
+                }
+                if (accept != null) {
+                    for (String a : accept) {
+                        if (a == null) continue;
+                        a = a.trim().toLowerCase();
+                        if (a.isEmpty() || a.equals("*/*")) continue;
+                        if (a.contains("/")) {
+                            mimes.add(a);
+                        } else if (a.startsWith(".")) {
+                            String m = MimeTypeMap.getSingleton()
+                                    .getMimeTypeFromExtension(a.substring(1));
+                            if (m != null) mimes.add(m);
+                        }
+                    }
+                }
+
+                if (mimes.isEmpty()) {
+                    pick.setType("*/*");
+                } else {
+                    pick.setType(mimes.get(0));
+                    if (mimes.size() > 1) {
+                        pick.putExtra(Intent.EXTRA_MIME_TYPES,
+                                mimes.toArray(new String[0]));
+                    }
+                }
+
+                try {
+                    if (params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) {
+                        pick.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                    }
+                } catch (Exception ignored) {
+                }
+                pick.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                try {
+                    // 直接启动，让系统自己弹选择器；套 createChooser 在部分机型上会吞掉结果
+                    startActivityForResult(pick, REQ_FILE);
+                } catch (Exception e) {
+                    filePathCallback = null;
+                    Toast.makeText(MainActivity.this,
+                            "没有找到可以选文件的应用", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+                return true;
+            }
+        });
+    }
+
+    /** 把选择结果喂回网页；无论成功失败都必须回调一次，否则页面会卡住。 */
+    private void deliverFileResult(int res, Intent data) {
+        if (filePathCallback == null) return;
+
+        Uri[] result = null;
+        if (res == RESULT_OK && data != null) {
+            if (data.getClipData() != null) {
+                int n = data.getClipData().getItemCount();
+                result = new Uri[n];
+                for (int i = 0; i < n; i++) {
+                    result[i] = data.getClipData().getItemAt(i).getUri();
+                }
+            } else if (data.getData() != null) {
+                result = new Uri[]{data.getData()};
+            }
+        }
+        filePathCallback.onReceiveValue(result);
+        filePathCallback = null;
     }
 
     /** 返回 true 表示已交给外部 App 处理。 */
@@ -299,7 +405,33 @@ public class MainActivity extends Activity {
         if (imm != null) imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
     }
 
-    // ---------------------------------------------------------------- 浮出面板
+    // ---------------------------------------------------------------- 边缘三角 / 浮出面板
+
+    /** 三角：把 ☰ 放出来或者收回去。收回去时如果面板开着，一起关掉。 */
+    private void toggleRail() {
+        if (railOpen) {
+            closePanel();
+            setRail(false);
+        } else {
+            setRail(true);
+        }
+    }
+
+    private void setRail(boolean open) {
+        railOpen = open;
+        if (open) {
+            fab.setVisibility(View.VISIBLE);
+            fab.setAlpha(0f);
+            fab.setTranslationX(-dp(8));
+            fab.animate().alpha(1f).translationX(0f).setDuration(140).start();
+        } else {
+            fab.animate().alpha(0f).translationX(-dp(8)).setDuration(110)
+                    .withEndAction(() -> fab.setVisibility(View.GONE))
+                    .start();
+        }
+        edgeTab.setImageResource(open ? R.drawable.ic_edge_left : R.drawable.ic_edge);
+        refreshKeyButton();
+    }
 
     private void togglePanel() {
         if (panelOpen) closePanel();
@@ -309,13 +441,14 @@ public class MainActivity extends Activity {
     private void openPanel() {
         if (panelOpen) return;
         panelOpen = true;
+        setRail(true);
         refreshList();
         panel.setVisibility(View.VISIBLE);
         scrim.setVisibility(View.VISIBLE);
 
         panel.setAlpha(0f);
-        panel.setTranslationY(dp(12));
-        panel.animate().alpha(1f).translationY(0f).setDuration(150).start();
+        panel.setTranslationX(-dp(12));
+        panel.animate().alpha(1f).translationX(0f).setDuration(150).start();
     }
 
     private void closePanel() {
@@ -323,11 +456,13 @@ public class MainActivity extends Activity {
         panelOpen = false;
         panel.animate()
                 .alpha(0f)
-                .translationY(dp(12))
+                .translationX(-dp(12))
                 .setDuration(120)
                 .withEndAction(() -> {
                     panel.setVisibility(View.GONE);
                     scrim.setVisibility(View.GONE);
+                    // 面板关掉后顺手把 ☰ 也收回去，回到只有边缘三角的干净状态
+                    setRail(false);
                 })
                 .start();
     }
@@ -337,7 +472,8 @@ public class MainActivity extends Activity {
     private void setupButtons() {
         findViewById(R.id.scanBtn).setOnClickListener(v -> startScan());
         findViewById(R.id.btnScan2).setOnClickListener(v -> startScan());
-        findViewById(R.id.fab).setOnClickListener(v -> togglePanel());
+        fab.setOnClickListener(v -> togglePanel());
+        edgeTab.setOnClickListener(v -> toggleRail());
         scrim.setOnClickListener(v -> closePanel());
 
         findViewById(R.id.btnBack).setOnClickListener(v -> {
@@ -378,6 +514,10 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
+        if (req == REQ_FILE) {
+            deliverFileResult(res, data);
+            return;
+        }
         if (req != REQ_SCAN || res != RESULT_OK || data == null) return;
         String text = data.getStringExtra(ScanActivity.EXTRA_RESULT);
         if (text == null) return;
@@ -420,8 +560,29 @@ public class MainActivity extends Activity {
 
     private void setPasswordFieldVisible(boolean visible) {
         pageHasPassword = visible;
-        boolean show = visible && browsing && !vault.isEmpty();
-        fabKey.setVisibility(show ? View.VISIBLE : View.GONE);
+        refreshKeyButton();
+    }
+
+    /** 钥匙按钮：页面有密码框且密码库非空才出现，与 ☰ 是否展开无关。 */
+    private void refreshKeyButton() {
+        boolean show = pageHasPassword && browsing && !vault.isEmpty();
+        if (show == (fabKey.getVisibility() == View.VISIBLE)) {
+            // 位置随 ☰ 是否展开变化，已显示时只挪位置，不重播动画
+            if (show) fabKey.setTranslationY(railOpen ? -dp(52) : 0);
+            return;
+        }
+        if (show) {
+            fabKey.setTranslationY(railOpen ? -dp(52) : 0);
+            fabKey.setVisibility(View.VISIBLE);
+            fabKey.setAlpha(0f);
+            fabKey.setScaleX(0.8f);
+            fabKey.setScaleY(0.8f);
+            fabKey.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(140).start();
+        } else {
+            fabKey.animate().alpha(0f).setDuration(110)
+                    .withEndAction(() -> fabKey.setVisibility(View.GONE))
+                    .start();
+        }
     }
 
     /** 把某条密码填进当前页面。 */
@@ -445,7 +606,7 @@ public class MainActivity extends Activity {
         if (vaultCount != null) {
             vaultCount.setText(n == 0 ? "空" : n + " 条");
         }
-        if (pageHasPassword) setPasswordFieldVisible(true);
+        if (pageHasPassword) refreshKeyButton();
     }
 
     // ---------------------------------------------------------------- 最近列表
@@ -519,6 +680,10 @@ public class MainActivity extends Activity {
         }
         if (panelOpen) {
             closePanel();
+            return;
+        }
+        if (railOpen) {
+            setRail(false);
             return;
         }
         if (browsing) {
