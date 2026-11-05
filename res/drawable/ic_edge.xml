@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 屏幕最左边缘的小三角：点它才把 ☰ 按钮放出来 -->
+<!-- 三角朝右：点一下把 ☰ 放出来 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:fillColor="#FF000000"
+        android:fillColor="#FFFFFFFF"
         android:pathData="M9,6 L17,12 L9,18 Z" />
 </vector>

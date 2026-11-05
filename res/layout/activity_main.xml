@@ -265,8 +265,7 @@
         android:paddingLeft="1dp"
         android:paddingRight="2dp"
         android:scaleType="fitCenter"
-        android:src="@drawable/ic_edge"
-        android:tint="@color/muted" />
+        android:src="@drawable/ic_edge" />
 
     <!-- 左下角小半透明按钮：默认藏起来，点三角才出现 -->
     <ImageButton
